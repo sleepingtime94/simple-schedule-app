@@ -28,15 +28,8 @@ function validateScheduleData(schedules) {
   }
 
   for (const schedule of schedules) {
-    if (
-      !schedule.time ||
-      !schedule.phone ||
-      !schedule.name ||
-      !schedule.medicine
-    ) {
-      throw new Error(
-        "Missing required fields: time, phone, name, or medicine."
-      );
+    if (!schedule.time || !schedule.phone || !schedule.message) {
+      throw new Error("Missing required fields: time, phone or message.");
     }
   }
 
@@ -51,19 +44,18 @@ function validateScheduleData(schedules) {
 function scheduleMessage(scheduleData) {
   try {
     const job = schedule.scheduleJob(scheduleData.time, async () => {
-      const message = `Halo ${scheduleData.name},\nIni waktunya kamu minum obat ${scheduleData.medicine}\n\nGemaantik.id`;
       const payload = {
         phone: scheduleData.phone,
-        message: message,
+        message: scheduleData.message,
       };
 
       try {
         await axios.post(process.env.API_URL, payload);
-        console.log(`Successfully sent message to ${scheduleData.phone}`);
+        console.log(`Successfully sent message to: ${scheduleData.phone}`);
         job.cancel(); // Cancel the job after successful execution
       } catch (error) {
         console.error(
-          `Failed to send message to ${scheduleData.phone}:`,
+          `Failed to send message to: ${scheduleData.phone}:`,
           error.message
         );
       }
@@ -88,7 +80,7 @@ app.post("/schedule", (req, res) => {
 
     res.status(200).json({
       message: "Schedule created.",
-      scheduledMessages: schedules,
+      data: schedules,
     });
   } catch (error) {
     res.status(400).json({ error: error.message });
