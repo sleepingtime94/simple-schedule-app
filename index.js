@@ -3,6 +3,8 @@ const schedule = require("node-schedule");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const axios = require("axios");
+const fs = require("fs");
+
 require("dotenv").config();
 
 const app = express();
@@ -65,6 +67,55 @@ function scheduleMessage(scheduleData) {
   }
 }
 
+// Creating log
+const logMessageToFile = (logData) => {
+  const logFilePath = "./logs.json";
+
+  try {
+    // Initialize logs as an empty array
+    let logs = [];
+
+    // Check if file exists
+    if (fs.existsSync(logFilePath)) {
+      try {
+        // Read existing logs
+        const fileContent = fs.readFileSync(logFilePath, "utf8");
+        const parsedData = JSON.parse(fileContent);
+
+        // Ensure that parsed data is an array
+        if (Array.isArray(parsedData)) {
+          logs = parsedData;
+        } else {
+          console.warn(
+            "Logs file does not contain an array. Creating a new logs array."
+          );
+        }
+      } catch (parseError) {
+        console.error("Error parsing logs file:", parseError);
+        console.log("Creating a new logs array.");
+      }
+    } else {
+      console.log("Logs file does not exist. Creating a new one.");
+    }
+
+    // Get current date and time
+    const now = new Date();
+
+    // Add new log with detailed timestamp information
+    logs.push({
+      ...logData,
+      date: now.toLocaleDateString(),
+      time: now.toLocaleTimeString(),
+    });
+
+    // Write updated logs back to file
+    fs.writeFileSync(logFilePath, JSON.stringify(logs, null, 2), "utf8");
+    console.log("Message logged successfully");
+  } catch (error) {
+    console.error("Error logging message:", error);
+  }
+};
+
 // Schedule endpoint
 app.post("/schedule", (req, res) => {
   try {
@@ -76,6 +127,11 @@ app.post("/schedule", (req, res) => {
     // Schedule each message
     schedules.forEach((scheduleData) => {
       scheduleMessage(scheduleData);
+    });
+
+    // Log the message
+    logMessageToFile({
+      data: schedules,
     });
 
     res.status(200).json({
