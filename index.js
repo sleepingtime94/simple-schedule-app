@@ -104,8 +104,7 @@ const logMessageToFile = (logData) => {
     // Add new log with detailed timestamp information
     logs.push({
       ...logData,
-      date: now.toLocaleDateString(),
-      time: now.toLocaleTimeString(),
+      date: now.toLocaleDateString() + " " + now.toLocaleTimeString(),
     });
 
     // Write updated logs back to file
@@ -140,6 +139,22 @@ app.post("/schedule", (req, res) => {
     });
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+app.get("/logs", (req, res) => {
+  const logFilePath = "./logs.json";
+
+  try {
+    if (fs.existsSync(logFilePath)) {
+      const logs = JSON.parse(fs.readFileSync(logFilePath, "utf8"));
+      res.status(200).json(logs);
+    } else {
+      res.status(200).json([]);
+    }
+  } catch (error) {
+    console.error("Error reading logs:", error);
+    res.status(500).json({ error: "Failed to read logs" });
   }
 });
 
