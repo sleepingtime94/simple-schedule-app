@@ -31,7 +31,7 @@ function validateScheduleData(schedules) {
 
 function scheduleMessage(scheduleData) {
   try {
-    const key = scheduleData.phone;
+    const key = `${scheduleData.phone}-${scheduleData.time}`; // Key unik
     if (activeJobs.has(key)) {
       console.log(`:: Job for ${key} already scheduled, skipping.`);
       return;
@@ -43,16 +43,16 @@ function scheduleMessage(scheduleData) {
       };
       try {
         await axios.post(process.env.API_URL, payload);
-        console.log(`:: Successfully sent message to: ${scheduleData.phone}`);
+        console.log(
+          `:: Process to send: ${scheduleData.phone} at ${scheduleData.time}`
+        );
         activeJobs.delete(key);
       } catch (error) {
-        console.error(
-          `Failed to send message to: ${scheduleData.phone}:`,
-          error.message
-        );
+        console.error(`Failed send to: ${scheduleData.phone}:`, error.message);
       }
     });
     activeJobs.set(key, job);
+    console.log(`:: Scheduled job for ${key}`);
   } catch (error) {
     console.error(":: Error scheduling job:", error.message);
   }
@@ -70,9 +70,9 @@ async function logMessageToFile(logData) {
     const now = new Date();
     logs.push({ ...logData, date: now.toISOString() });
     await fs.writeFile(logFilePath, JSON.stringify(logs, null, 2), "utf8");
-    console.log(":: Message logged successfully");
+    console.log(":: Logs created");
   } catch (error) {
-    console.error(":: Error logging message:", error);
+    console.error(":: Error logging:", error);
   }
 }
 
@@ -107,5 +107,5 @@ app.get("/logs", async (req, res) => {
 
 const PORT = process.env.APP_PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`:: Server is running on port ${PORT}`);
+  console.log(`:: Running on port ${PORT}`);
 });
